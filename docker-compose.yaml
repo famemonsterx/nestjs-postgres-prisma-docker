@@ -1,0 +1,46 @@
+# docker-compose.dev.yml
+version: '3'
+
+services:
+  next-app:
+    container_name: nest-app
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    # Set envrionment variables based on the .env file
+    env_file:
+      - .env
+    # Set environment variables directly in the docker-compose file
+    environment:
+      POSTGRES_DATABASE: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app/nest-app
+    restart: always
+    ports:
+      - 3000:3000
+  postgres:
+    image: postgres:15
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ["CMD", "pg_isready", "-U", "postgres", "-d", "leadDB"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  pgdata: {}
